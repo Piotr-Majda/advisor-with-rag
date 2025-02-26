@@ -1,0 +1,22 @@
+
+services:
+  investment-advisor:
+    container_name: investment-advisor
+    build: .
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - faiss_data:/app/faiss_index
+      - ./:/app
+    networks:
+      - investment-net
+
+volumes:
+  faiss_data:
+
+networks:
+  investment-net:
+    driver: bridge
