@@ -19,7 +19,8 @@ load_dotenv()
 st.set_page_config(page_title="💬 AI Doradca Inwestycyjny", page_icon="💼")
 
 # Custom CSS for chat interface
-st.markdown("""
+st.markdown(
+    """
 <style>
 .chat-container {
     height: 500px;
@@ -56,7 +57,9 @@ st.markdown("""
     display: table;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 VECTOR_DB_PATH = "faiss_index"
 
@@ -77,7 +80,7 @@ def load_vector_store():
             return FAISS.load_local(
                 folder_path=VECTOR_DB_PATH,
                 embeddings=OpenAIEmbeddings(),
-                allow_dangerous_deserialization=True
+                allow_dangerous_deserialization=True,
             )
         except Exception as e:
             print(f"Error loading FAISS index: {e}")
@@ -106,10 +109,7 @@ def process_pdfs(uploaded_files):
             if os.path.exists(tmp_file.name):
                 os.remove(tmp_file.name)
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     return text_splitter.split_documents(documents)
 
 
@@ -138,18 +138,15 @@ def generate_response(question, vector_store):
     Odpowiedź:"""
 
     prompt = PromptTemplate(
-        template=template,
-        input_variables=["doc_context", "web_context", "question"]
+        template=template, input_variables=["doc_context", "web_context", "question"]
     )
 
     llm = ChatOpenAI(temperature=0.3, model="gpt-4-0125-preview")
     chain = prompt | llm
 
-    return chain.invoke({
-        "doc_context": doc_context,
-        "web_context": web_context,
-        "question": question
-    })
+    return chain.invoke(
+        {"doc_context": doc_context, "web_context": web_context, "question": question}
+    )
 
 
 def main():
@@ -167,19 +164,24 @@ def main():
             "Prześlij pliki PDF",
             type="pdf",
             accept_multiple_files=True,
-            help="Maksymalnie 10 plików PDF"
+            help="Maksymalnie 10 plików PDF",
         )
         new_files = []
         if uploaded_files:
-            new_files = [file for file in uploaded_files if
-                         file.name not in st.session_state.get("processed_files", [])]
+            new_files = [
+                file
+                for file in uploaded_files
+                if file.name not in st.session_state.get("processed_files", [])
+            ]
 
         if new_files:
             try:
                 with st.spinner("Przetwarzanie dokumentów..."):
                     for file in uploaded_files:
                         if file.size > 30 * 1024 * 1024:  # 30MB limit
-                            raise ValueError(f"Plik {file.name} jest zbyt duży (max 30MB)")
+                            raise ValueError(
+                                f"Plik {file.name} jest zbyt duży (max 30MB)"
+                            )
                     texts = process_pdfs(uploaded_files)
                     embeddings = OpenAIEmbeddings()
 
@@ -196,7 +198,9 @@ def main():
                     # Store processed filenames
                     if "processed_files" not in st.session_state:
                         st.session_state.processed_files = []
-                    st.session_state.processed_files.extend([file.name for file in new_files])
+                    st.session_state.processed_files.extend(
+                        [file.name for file in new_files]
+                    )
 
                     st.success("Dokumenty przetworzone!")
             except Exception as e:
@@ -205,28 +209,30 @@ def main():
     if st.session_state.messages:
         chat_container = st.container()
         with chat_container:
-            st.markdown('<div>', unsafe_allow_html=True)
+            st.markdown("<div>", unsafe_allow_html=True)
 
             for message in st.session_state.messages:
                 if message["role"] == "user":
-                    st.markdown(f'<div class="user-message">{message["content"]}</div><div class="clearfix"></div>',
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div class="user-message">{message["content"]}</div><div class="clearfix"></div>',
+                        unsafe_allow_html=True,
+                    )
                 else:
                     st.markdown(
                         f'<div class="assistant-message">{message["content"]}</div><div class="clearfix"></div>',
-                        unsafe_allow_html=True)
+                        unsafe_allow_html=True,
+                    )
 
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     if prompt := st.chat_input("Zadaj pytanie dotyczące inwestycji..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         with st.spinner("Analizowanie..."):
             response = generate_response(prompt, st.session_state.vector_store)
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": response.content
-            })
+            st.session_state.messages.append(
+                {"role": "assistant", "content": response.content}
+            )
 
         st.rerun()
 
