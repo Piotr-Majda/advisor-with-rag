@@ -10,3 +10,7 @@ python-multipart
 tiktoken
 openai
 pydantic
+pytest
+flake8
+black
+safety
