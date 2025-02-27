@@ -1,0 +1,62 @@
+name: CI (Docker)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docker-ci:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Docker Buildx (improves caching and builds multi-platform images)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Build the Docker image
+      - name: Build Docker image
+        run: docker build -t advisor-with-RAG .
+
+      # Run tests inside the Docker container
+      - name: Run tests in Docker container
+        run: docker run --rm advisor-with-RAG pytest
+
+      # Run linter (flake8) inside the Docker container
+      - name: Lint with flake8
+        run: docker run --rm advisor-with-RAG flake8 .
+
+      # Check code formatting with black inside the Docker container
+      - name: Check code formatting with black
+        run: docker run --rm advisor-with-RAG black --check .
+
+      # Run a security scan using Safety (ensure it's in your requirements or installed in the image)
+      - name: Run safety security check
+        run: docker run --rm advisor-with-RAG safety check
+
+  # Optional: CodeQL security scanning job
+  security:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
