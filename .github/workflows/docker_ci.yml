@@ -1,4 +1,4 @@
-name: CI (Docker)
+name: CI/CD (Docker + AWS ECS)
 
 on:
   push:
@@ -10,35 +10,24 @@ jobs:
   docker-ci:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Docker Buildx (improves caching and builds multi-platform images)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Build the Docker image
       - name: Build Docker image
         run: docker build -t advisor-with-rag .
 
-      # Run tests inside the Docker container
-      # - name: Run tests in Docker container
-      #   run: docker run --rm advisor-with-rag pytest
-
-      # Run linter (flake8) inside the Docker container
       - name: Lint with flake8
         run: docker run --rm advisor-with-rag flake8 .
 
-      # Check code formatting with black inside the Docker container
       - name: Check code formatting with black
         run: docker run --rm advisor-with-rag black --check .
 
-      # Run a security scan using Safety (ensure it's in your requirements or installed in the image)
       - name: Run safety security check
         run: docker run --rm advisor-with-rag safety check
 
-  # Optional: CodeQL security scanning job
   security:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
@@ -60,3 +49,52 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
+
+  deploy:
+    needs: [docker-ci, security]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push Docker image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Update ECS Task Definition
+        env:
+          ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
+          ECS_SERVICE_NAME: ${{ secrets.ECS_SERVICE_NAME }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          TASK_FAMILY=$(aws ecs describe-task-definition --task-definition $ECS_SERVICE_NAME --query "taskDefinition.family" --output text)
+          NEW_TASK_DEF=$(aws ecs describe-task-definition --task-definition $ECS_SERVICE_NAME --query "taskDefinition" | \
+            jq "del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy) | 
+                .containerDefinitions[0].image=\"$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG\"")
+          echo "$NEW_TASK_DEF" > new-task-def.json
+          aws ecs register-task-definition --cli-input-json file://new-task-def.json
+
+      - name: Deploy to Amazon ECS
+        env:
+          ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
+          ECS_SERVICE_NAME: ${{ secrets.ECS_SERVICE_NAME }}
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment
