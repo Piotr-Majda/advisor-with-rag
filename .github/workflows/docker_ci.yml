@@ -50,7 +50,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  deploy:
+  deploy-to-aws-ecs:
     needs: [docker-ci, security]
     runs-on: ubuntu-latest
     steps:
@@ -84,11 +84,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
         run: |
           TASK_FAMILY=$(aws ecs describe-task-definition --task-definition $ECS_SERVICE_NAME --query "taskDefinition.family" --output text)
           NEW_TASK_DEF=$(aws ecs describe-task-definition --task-definition $ECS_SERVICE_NAME --query "taskDefinition" | \
             jq "del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy) | 
-                .containerDefinitions[0].image=\"$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG\"")
+                .containerDefinitions[0].image=\"$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG\" |
+                .containerDefinitions[0].environment += [{\"name\": \"OPENAI_API_KEY\", \"value\": \"$OPENAI_API_KEY\"},
+                                                        {\"name\": \"SERPAPI_KEY\", \"value\": \"$SERPAPI_KEY\"}]")
           echo "$NEW_TASK_DEF" > new-task-def.json
           aws ecs register-task-definition --cli-input-json file://new-task-def.json
 

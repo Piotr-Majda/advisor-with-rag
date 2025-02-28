@@ -99,7 +99,7 @@ A smart investment advisor combining document analysis with real-time web data u
 ## 🔑 Environment Variables
   ```
   OPENAI_API_KEY=your-openai-key
-  SERPER_API_KEY=your-serper-key
+  SERP_API_KEY=your-serp-key
   ```
 ## 📄 License
 MIT License - See LICENSE for details

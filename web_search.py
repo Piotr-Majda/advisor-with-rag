@@ -10,7 +10,7 @@ load_dotenv()
 def web_search(question):
     web_context = ""
     try:
-        if not os.getenv("SERPER_API_KEY"):
+        if not os.getenv("SERP_API_KEY"):
             raise ValueError("Brak klucza API Serper")
 
         search = GoogleSearch(
@@ -20,7 +20,7 @@ def web_search(question):
                 "hl": "pl",
                 "gl": "pl",
                 "num": 5,
-                "api_key": os.getenv("SERPER_API_KEY"),  # Dodaj klucz API
+                "api_key": os.getenv("SERP_API_KEY"),  # Dodaj klucz API
             }
         )
 
