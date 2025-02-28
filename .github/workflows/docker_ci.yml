@@ -86,7 +86,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-          TASK_DEFINITION: $ {{ secrets.TASK_DEFINITION }}
+          TASK_DEFINITION: ${{ secrets.TASK_DEFINITION }}
         run: |
           TASK_FAMILY=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION --query "taskDefinition.family" --output text)
           NEW_TASK_DEF=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION --query "taskDefinition" | \
