@@ -1,0 +1,17 @@
+{
+    "include": [
+        "services"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__"
+    ],
+    "ignore": [],
+    "defineConstant": {},
+    "typeshedPath": "",
+    "venvPath": "/usr/local",
+    "pythonVersion": "3.13",
+    "pythonPlatform": "Linux",
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+} 

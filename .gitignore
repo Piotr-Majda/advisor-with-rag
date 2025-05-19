@@ -1,4 +1,41 @@
 .venv
 .env
+.env.prod
+.env.*.local
+
+# Keep examples
+!.env.example
+!.env.dev
 .python-version
 faiss_index*
+.idea
+.vscode
+
+# add trash temp file 
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# System generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Log files
+*.log
+logs/
+npm-debug.log*
+
+# Cache directories
+.cache/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Build outputs and distributions
+dist/
+build/
+*.egg-info/

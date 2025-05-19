@@ -1,0 +1,72 @@
+{
+    "folders": [
+        {
+            "name": "API Gateway",
+            "path": "api-gateway"
+        },
+        {
+            "name": "Chat Service",
+            "path": "services/chat-service"
+        },
+        {
+            "name": "Search Service",
+            "path": "services/search-service"
+        },
+        {
+            "name": "Vector Service",
+            "path": "services/vector-service"
+        },
+        {
+            "name": "UI Service",
+            "path": "services/ui-service"
+        },
+        {
+            "name": "Document Service",
+            "path": "services/document-service"
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+            "**/__pycache__": true,
+            "**/.pytest_cache": true,
+            "**/node_modules": true
+        },
+        "python.analysis.extraPaths": [
+            "${workspaceFolder}/packages",
+            "${workspaceFolder}/shared"
+        ],
+        "python.autoComplete.extraPaths": [
+            "${workspaceFolder}/packages",
+            "${workspaceFolder}/shared"
+        ],
+        "python.analysis.typeCheckingMode": "basic",
+        "python.analysis.diagnosticSeverityOverrides": {
+            "reportGeneralTypeIssues": "warning",
+            "reportMissingImports": "warning"
+        },
+        // Add these new settings for better auto-import experience
+        "python.analysis.importFormat": "absolute",
+        "python.analysis.autoImportCompletions": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        },
+        "editor.suggestSelection": "first",
+        "python.languageServer": "Pylance",
+        "editor.snippetSuggestions": "top",
+        "editor.suggest.showWords": false,
+        "editor.acceptSuggestionOnEnter": "smart",
+        "editor.suggestOnTriggerCharacters": true,
+        "editor.tabCompletion": "on",
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": false
+        }
+    }
+} 

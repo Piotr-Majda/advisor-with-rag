@@ -1,0 +1,9 @@
+fastapi>=0.109.2
+uvicorn>=0.27.1
+python-dotenv>=1.0.0
+requests>=2.31.0
+pydantic>=2.10.6
+websockets>=12.0
+httpx>=0.26.0
+tenacity>=8.2.2
+openai>=1.1.0

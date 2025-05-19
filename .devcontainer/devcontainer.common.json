@@ -1,0 +1,56 @@
+{
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-azuretools.vscode-docker",
+                "augmentai.augment",
+                "github.copilot",
+                "github.copilot-chat",
+                "ms-python.black-formatter",
+                "njpwerner.autodocstring"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.analysis.extraPaths": [
+                    "/app",
+                    "/app/shared"
+                ],
+                "python.autoComplete.extraPaths": [
+                    "/app",
+                    "/app/shared"
+                ],
+                "python.analysis.typeCheckingMode": "basic",
+                "python.analysis.diagnosticSeverityOverrides": {
+                    "reportGeneralTypeIssues": "warning",
+                    "reportMissingImports": "warning"
+                },
+                "editor.formatOnSave": true,
+                "python.formatting.provider": "black",
+                "python.linting.enabled": true,
+                "python.linting.flake8Enabled": true,
+                "python.linting.flake8Args": [
+                    "--max-line-length=120"
+                ],
+                "python.analysis.importFormat": "absolute",
+                "python.analysis.autoImportCompletions": true,
+                "python.languageServer": "Pylance",
+                "editor.suggestSelection": "first",
+                "files.autoSave": "afterDelay",
+                "files.autoSaveDelay": 1000,
+                "files.watcherExclude": {
+                    "**/.git/objects/**": true,
+                    "**/.git/subtree-cache/**": true,
+                    "**/node_modules/**": true,
+                    "**/.venv/**": true,
+                    "**/docs/**": true
+                }
+            }
+        }
+    },
+    "mounts": [
+        "source=vscode-server,target=/home/vscode/.vscode-server,type=volume"
+    ],
+    "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.vscode-server"
+}

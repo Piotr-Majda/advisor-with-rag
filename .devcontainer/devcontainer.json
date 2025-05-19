@@ -1,0 +1,69 @@
+{
+  "name": "Advisor Microservices Development",
+
+  // Use the dev-docker-compose.yml as the primary orchestrator
+  "dockerComposeFile": ["../dev-docker-compose.yml"],
+
+  // The service VS Code should connect to initially
+  "service": "api-gateway",
+
+  // The workspace folder in the container
+  "workspaceFolder": "/workspace",
+
+  // Configure appropriate ports
+  "forwardPorts": [8000, 8001, 8002, 8003, 8004],
+
+  // VS Code extensions to install inside the container
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Python development
+        "ms-python.python",
+        "ms-pyright.pyright",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "ms-python.isort",
+        
+        // Docker support
+        "ms-azuretools.vscode-docker",
+        
+        // General development
+        "eamodio.gitlens",
+        "ms-vscode.makefile-tools",
+        "yzhang.markdown-all-in-one",
+        
+        // REST API testing
+        "rangav.vscode-thunder-client",
+        
+        // YAML for docker-compose
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        // Python settings
+        "python.linting.enabled": true,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.blackArgs": ["--line-length", "88"],
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        },
+        
+        // Pyright specific settings
+        "python.analysis.typeCheckingMode": "basic",
+        "python.analysis.autoImportCompletions": true,
+        
+        // Terminal settings
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash"
+          }
+        }
+      }
+    }
+  },
+
+  // Run commands after container creation
+  "postCreateCommand": "pip install -r shared/requirements.txt && pip install -r shared/requirements-dev.txt || echo 'Warning: Some shared dependencies could not be installed'"
+}

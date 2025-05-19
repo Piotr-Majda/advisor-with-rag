@@ -1,0 +1,21 @@
+{
+    "name": "${localWorkspaceFolderBasename}",
+    "dockerComposeFile": [
+        "../../dev-docker-compose.yml"
+    ],
+    "service": "chat-service",
+    "workspaceFolder": "/app",
+    "remoteUser": "vscode",
+    "shutdownAction": "stopCompose",
+    "extends": "../devcontainer.common.json",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.analysis.extraPaths": [
+                    "/app"
+                ]
+            }
+        }
+    }
+}

@@ -5,51 +5,61 @@ networks:
     driver: bridge
 
 services:
-  ui:
+  ui-service:
     build:
       context: .
       dockerfile: services/ui-service/Dockerfile
-      target: production
+      target: development
+    volumes:
+      - ./services/ui-service:/app
+      - ./shared:/app/shared
+      - vscode-server:/home/vscode/.vscode-server
     ports:
       - "8501:8501"
-    volumes:
-      - ./shared:/app/shared
     environment:
       - API_GATEWAY_URL=http://api-gateway:8000
-      - APP_ENV=production
+      - APP_ENV=development
       - LOG_LEVEL=INFO
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
     depends_on:
       - api-gateway
+    user: vscode
     networks:
       - frontend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   api-gateway:
     build:
       context: .
       dockerfile: api-gateway/Dockerfile
-      target: production
+      target: development
+    volumes:
+      - ./api-gateway:/app
+      - ./shared:/app/shared
+      - vscode-server:/home/vscode/.vscode-server
+      - ./logs:/app/logs
     ports:
       - "8000:8000"
+      - "5678:5678"  # Debug port
     environment:
       - DOCUMENT_SERVICE_URL=http://document-service:8001
       - SEARCH_SERVICE_URL=http://search-service:8002
       - CHAT_SERVICE_URL=http://chat-service:8003
-      - VECTOR_SERVICE_URL=http://vector-service:8004
-      - APP_ENV=production
+      - APP_ENV=development
       - LOG_LEVEL=INFO
       - LOG_DIR=/app/logs
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
-    volumes:
-      - ./shared:/app/shared
-    depends_on:
-      document-service:
-        condition: service_healthy
-      chat-service:
-        condition: service_healthy
-      search-service:
-        condition: service_healthy
+    user: vscode
+    cap_add:
+      - SYS_PTRACE    # Required for debugger
+    security_opt:
+      - seccomp:unconfined    # Required for debugger to attach to process
     networks:
       - frontend
       - backend
@@ -58,36 +68,45 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
-     image: redis:alpine
-     ports:
-       - "6379:6379"
-     volumes:
-       - redis-data:/data
-     command: redis-server --appendonly yes
-     networks:
-       - backend
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - backend
 
   document-service:
     build:
       context: .
       dockerfile: services/document-service/Dockerfile
-      target: production
+      target: development
+    volumes:
+      - ./services/document-service:/app
+      - ./shared:/app/shared
+      - vscode-server:/home/vscode/.vscode-server
+      - ./logs:/app/logs
     ports:
       - "8001:8001"
+      - "5679:5678"  # Debug port
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - VECTOR_DB_PATH=/app/data/vector_store
-      - APP_ENV=production
+      - APP_ENV=development
       - LOG_LEVEL=INFO
       - LOG_DIR=/app/logs
-    volumes:
-      - vector_store:/app/vector_store
-      - ./logs:/app/logs
-      - ./shared:/app/shared
-    networks:
-      - backend
+    user: vscode
+    cap_add:
+      - SYS_PTRACE    # Required for debugger
+    security_opt:
+      - seccomp:unconfined    # Required for debugger to attach to process
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
@@ -99,49 +118,77 @@ services:
           memory: 2G
         reservations:
           memory: 1G
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   search-service:
     build:
       context: .
       dockerfile: services/search-service/Dockerfile
-      target: production
+      target: development
+    volumes:
+      - ./services/search-service:/app
+      - ./shared:/app/shared
+      - vscode-server:/home/vscode/.vscode-server
+      - ./logs:/app/logs
     ports:
       - "8002:8002"
+      - "5680:5678"  # Debug port
     environment:
-      - APP_ENV=production
+      - APP_ENV=development
       - LOG_LEVEL=INFO
-    networks:
-      - backend
+      - LOG_DIR=/app/logs
+    user: vscode
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+    cap_add:
+      - SYS_PTRACE    # Required for debugger
+    security_opt:
+      - seccomp:unconfined    # Required for debugger to attach to process
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   chat-service:
     build:
       context: .
       dockerfile: services/chat-service/Dockerfile
-      target: production
+      target: development
+    volumes:
+      - ./services/chat-service:/app
+      - ./shared:/app/shared
+      - vscode-server:/home/vscode/.vscode-server
+      - ./logs:/app/logs
     ports:
       - "8003:8003"
+      - "5681:5678"  # Debug port
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - SEARCH_SERVICE_URL=http://search-service:8002
       - VECTOR_SERVICE_URL=http://vector-service:8004
-      - APP_ENV=production
+      - APP_ENV=development
       - LOG_LEVEL=INFO
       - LOG_DIR=/app/logs
-    depends_on:
-      vector-service:
-        condition: service_healthy
-      search-service:
-        condition: service_healthy
-    volumes:
-      - vector_store:/app/data/vector_store
-      - ./shared:/app/shared
-    networks:
-      - backend
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    user: vscode
+    cap_add:
+      - SYS_PTRACE    # Required for debugger
+    security_opt:
+      - seccomp:unconfined    # Required for debugger to attach to process
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
       interval: 30s
@@ -153,27 +200,44 @@ services:
           memory: 2G
         reservations:
           memory: 1G
+    depends_on:
+      - vector-service
+      - search-service
+    networks:
+      - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   vector-service:
     build:
       context: .
       dockerfile: services/vector-service/Dockerfile
-      target: production
+      target: development
     volumes:
       - ./services/vector-service:/app
       - ./shared:/app/shared
+      - vscode-server:/home/vscode/.vscode-server
       - vector_store:/app/vector_store
       - vector_backups:/app/backups
       - ./logs:/app/logs
     ports:
       - "8004:8004"
+      - "5682:5678"  # Debug port
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - VECTOR_STORE_PATH=/app/vector_store/store.pkl
       - BACKUP_PATH=/app/backups
-      - APP_ENV=production
+      - APP_ENV=development
       - LOG_LEVEL=INFO
       - LOG_DIR=/app/logs
+    user: vscode
+    cap_add:
+      - SYS_PTRACE    # Required for debugger
+    security_opt:
+      - seccomp:unconfined    # Required for debugger to attach to process
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
       interval: 30s
@@ -187,11 +251,18 @@ services:
           memory: 1G
     networks:
       - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   vector_store:
     name: advisor_vector_store
   vector_backups:
     name: advisor_vector_backups
+  vscode-server:
+    name: vscode-server
   redis-data:
     name: redis-data
